@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+__pycache__
+src/preprocessing/__pycache__
+src/algorithms/__pycache__
+src/algorithms/__init__.py
 
 # Virtual environment
 venv/
