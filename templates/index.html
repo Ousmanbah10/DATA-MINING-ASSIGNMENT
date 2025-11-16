@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket Association Rule Mining</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .product-btn {
+            padding: 12px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .product-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .product-btn.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .cart {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            min-height: 60px;
+        }
+
+        .cart-item {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            margin: 5px;
+            font-size: 13px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .report {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .recommendations {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .recommendation-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f0f0f0;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .confidence-bar {
+            background: #ddd;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .confidence-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            transition: width 0.5s;
+        }
+
+        .strength-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .strength-strong {
+            background: #28a745;
+            color: white;
+        }
+
+        .strength-moderate {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .strength-weak {
+            background: #dc3545;
+            color: white;
+        }
+
+        select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        input[type="number"] {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 120px;
+            margin: 5px;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        .input-group label {
+            display: inline-block;
+            width: 180px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .performance-table th,
+        .performance-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .performance-table th {
+            background: #667eea;
+            color: white;
+        }
+
+        .performance-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .file-input {
+            margin: 15px 0;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Supermarket Association Rule Mining</h1>
+        <p class="subtitle">Interactive Shopping Analysis & Product Recommendations</p>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="rawTransCount">0</div>
+                <div class="stat-label">Raw Transactions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="cleanedTransCount">0</div>
+                <div class="stat-label">Cleaned Transactions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="uniqueItems">0</div>
+                <div class="stat-label">Unique Items</div>
+            </div>
+        </div>
+
+        <!-- Step 1: Create Transactions -->
+        <div class="section">
+            <h2>Step 1: Create Transactions</h2>
+
+            <div class="products-grid" id="productsGrid"></div>
+            <div class="cart">
+                <strong>Current Cart:</strong>
+                <div id="currentCart"></div>
+            </div>
+            <button class="btn btn-success" onclick="addTransaction()">Add Transaction to Cart</button>
+            <button class="btn btn-danger" onclick="clearCart()">Clear Cart</button>
+        </div>
+
+        <!-- Step 2: Preprocess Data -->
+        <div class="section">
+            <h2>Step 2: Preprocess Data</h2>
+            <button class="btn" onclick="preprocessData()">Run Preprocessing</button>
+            <div id="preprocessReport" class="report hidden"></div>
+        </div>
+
+        <!-- Step 3: Run Mining -->
+        <div class="section">
+            <h2>Step 3: Run Association Rule Mining</h2>
+            <div class="input-group">
+                <label>Minimum Support:</label>
+                <input type="number" id="minSupport" value="0.2" min="0" max="1" step="0.05">
+                <span>(0.0 - 1.0)</span>
+            </div>
+            <div class="input-group">
+                <label>Minimum Confidence:</label>
+                <input type="number" id="minConfidence" value="0.5" min="0" max="1" step="0.05">
+                <span>(0.0 - 1.0)</span>
+            </div>
+            <button class="btn btn-success" onclick="runMining()">Analyze Patterns</button>
+
+            <div id="performanceResults" class="hidden">
+                <h3 style="margin-top: 20px;">Performance Comparison</h3>
+                <table class="performance-table">
+                    <thead>
+                        <tr>
+                            <th>Algorithm</th>
+                            <th>Execution Time (ms)</th>
+                            <th>Rules Generated</th>
+                            <th>Frequent Itemsets</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Apriori</strong></td>
+                            <td id="aprioriTime">-</td>
+                            <td id="aprioriRules">-</td>
+                            <td id="aprioriItemsets">-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Eclat</strong></td>
+                            <td id="eclatTime">-</td>
+                            <td id="eclatRules">-</td>
+                            <td id="eclatItemsets">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Step 4: Query Recommendations -->
+        <div class="section">
+            <h2>Step 4: Get Product Recommendations</h2>
+            <label><strong>Select a product:</strong></label>
+            <select id="productSelect" onchange="getRecommendations()">
+                <option value="">-- Choose a product --</option>
+            </select>
+
+            <div id="recommendationsArea" class="hidden">
+                <h3 style="margin-top: 20px;">Customers who bought <span id="selectedProduct"></span> also bought:</h3>
+                <div id="recommendations"></div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="messageArea"></div>
+    </div>
+
+    <script>
+        let currentCart = [];
+        let products = [];
+
+        // Load products on page load
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                const data = await response.json();
+                products = data;
+
+                // Populate product grid
+                const grid = document.getElementById('productsGrid');
+                grid.innerHTML = '';
+                products.forEach(product => {
+                    const btn = document.createElement('button');
+                    btn.className = 'product-btn';
+                    btn.textContent = product.name;
+                    btn.onclick = () => toggleProduct(product.name, btn);
+                    grid.appendChild(btn);
+                });
+
+                // Populate product select
+                const select = document.getElementById('productSelect');
+                products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.name.toLowerCase();
+                    option.textContent = product.name;
+                    select.appendChild(option);
+                });
+
+                updateStats();
+            } catch (error) {
+                showMessage('Error loading products', 'error');
+            }
+        }
+
+        function toggleProduct(productName, btn) {
+            const index = currentCart.indexOf(productName);
+            if (index > -1) {
+                currentCart.splice(index, 1);
+                btn.classList.remove('selected');
+            } else {
+                currentCart.push(productName);
+                btn.classList.add('selected');
+            }
+            updateCartDisplay();
+        }
+
+        function updateCartDisplay() {
+            const cartDiv = document.getElementById('currentCart');
+            if (currentCart.length === 0) {
+                cartDiv.innerHTML = '<em style="color: #999;">No items selected</em>';
+            } else {
+                cartDiv.innerHTML = currentCart.map(item =>
+                    `<span class="cart-item">${item}</span>`
+                ).join('');
+            }
+        }
+
+        function clearCart() {
+            currentCart = [];
+            document.querySelectorAll('.product-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            updateCartDisplay();
+        }
+
+        async function addTransaction() {
+            if (currentCart.length === 0) {
+                showMessage('Please select at least one product', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/transactions/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({items: currentCart})
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    clearCart();
+                    updateStats();
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error creating transaction', 'error');
+            }
+        }
+
+        async function preprocessData() {
+            try {
+                const response = await fetch('/api/preprocess', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    document.getElementById('preprocessReport').textContent = data.report_string;
+                    document.getElementById('preprocessReport').classList.remove('hidden');
+                    updateStats();
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error during preprocessing', 'error');
+            }
+        }
+
+        async function runMining() {
+            const minSupport = parseFloat(document.getElementById('minSupport').value);
+            const minConfidence = parseFloat(document.getElementById('minConfidence').value);
+
+            if (minSupport < 0 || minSupport > 1 || minConfidence < 0 || minConfidence > 1) {
+                showMessage('Support and confidence must be between 0 and 1', 'error');
+                return;
+            }
+
+            try {
+                showMessage('Running mining algorithms... This may take a few seconds.', 'info');
+
+                const response = await fetch('/api/mine', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        min_support: minSupport,
+                        min_confidence: minConfidence
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Mining completed successfully!', 'success');
+
+                    // Update performance table
+                    document.getElementById('aprioriTime').textContent = data.apriori.execution_time.toFixed(2);
+                    document.getElementById('aprioriRules').textContent = data.apriori.num_rules;
+                    document.getElementById('aprioriItemsets').textContent = data.apriori.num_frequent_itemsets;
+
+                    document.getElementById('eclatTime').textContent = data.eclat.execution_time.toFixed(2);
+                    document.getElementById('eclatRules').textContent = data.eclat.num_rules;
+                    document.getElementById('eclatItemsets').textContent = data.eclat.num_frequent_itemsets;
+
+                    document.getElementById('performanceResults').classList.remove('hidden');
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error during mining', 'error');
+            }
+        }
+
+        async function getRecommendations() {
+            const item = document.getElementById('productSelect').value;
+            if (!item) {
+                document.getElementById('recommendationsArea').classList.add('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/recommendations/${item}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('selectedProduct').textContent = item;
+                    const recsDiv = document.getElementById('recommendations');
+
+                    if (data.recommendations.length === 0) {
+                        recsDiv.innerHTML = '<p><em>No recommendations found for this product. Try adjusting mining parameters.</em></p>';
+                    } else {
+                        recsDiv.innerHTML = data.recommendations.map(rec => {
+                            const percentage = (rec.confidence * 100).toFixed(0);
+                            const barWidth = percentage;
+                            let strength = 'weak';
+                            let strengthLabel = 'Weak';
+                            if (rec.confidence >= 0.7) {
+                                strength = 'strong';
+                                strengthLabel = 'Strong';
+                            } else if (rec.confidence >= 0.4) {
+                                strength = 'moderate';
+                                strengthLabel = 'Moderate';
+                            }
+
+                            return `
+                                <div class="recommendation-item">
+                                    <strong>${rec.item}</strong>: ${percentage}% of the time
+                                    <span class="strength-badge strength-${strength}">${strengthLabel}</span>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: ${barWidth}%"></div>
+                                    </div>
+                                    <small style="color: #666;">Support: ${(rec.support * 100).toFixed(1)}% | Lift: ${rec.lift.toFixed(2)}</small>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+
+                    document.getElementById('recommendationsArea').classList.remove('hidden');
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error getting recommendations', 'error');
+            }
+        }
+
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+
+                document.getElementById('rawTransCount').textContent = data.total_raw_transactions;
+                document.getElementById('cleanedTransCount').textContent = data.total_cleaned_transactions;
+                document.getElementById('uniqueItems').textContent = data.unique_items;
+            } catch (error) {
+                console.error('Error updating stats', error);
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageArea = document.getElementById('messageArea');
+            const alertClass = type === 'success' ? 'alert-success' :
+                             type === 'error' ? 'alert-error' : 'alert-info';
+
+            messageArea.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+
+        // Initialize on page load
+        window.onload = () => {
+            loadProducts();
+            updateCartDisplay();
+        };
+    </script>
+</body>
+</html>
